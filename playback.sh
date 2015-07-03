@@ -72,7 +72,6 @@ echo "触屏设备: $touchdev "
 
 # tmp for ofile & tfile
 sed 's/\[//g;s/\]//g' $file >$afile             # 删除 '[' 和 ']'
-
 # generate operations to $ofile
 # 把sendevent操作输出到文件 $ofile
 # 正则解释:
@@ -85,7 +84,6 @@ cat $afile |\
     sed 's/4294967295/-1/g' |\
     sed 's/^/sendevent \/dev\/input\/eventX /g' |\
     sed "s/eventX/$touchdevs/g" >$ofile
-
 # generate times diff, for sleep
 # 获取时间差，以区分每个操作事件的sentevent
 
@@ -112,13 +110,13 @@ while read t; do
     if $(compare_float $mindiff $tdiff); then
         echo ''                                 # 时间差 <0.1s 认为无需sleep
     else
-        echo "sleep $tdiff; ${sleep_arry_line[@]}"
+        #echo "sleep $tdiff; ${sleep_arry_line[@]}"
+        echo "sleep $tdiff ;"
         sleep_arry_line+=($index)
         sleep_arry_time+=($(awk -va=$tdiff 'BEGIN {print a*1000000}'))
     fi
     ((index++))
 done < $t1file >$tfile
-
 # paste
 paste $tfile $ofile >$send                      # 合并两文本，组成 send.sh 脚本
 echo "exit" >>$send
@@ -152,8 +150,7 @@ EOF
 done < $ofile 
 append_line=67
 sed "$append_line r $tcfile" $modelcfile >$targetcfile
-sed -i "s/_REPLACE_DEVICE_/${touchdev//\//\\\/}/g" $targetcfile
-
+sed -i "s:_REPLACE_DEVICE_:${touchdev}:g" $targetcfile
 echo "使用Shell脚本执行:"
 echo "  adb shell < $send >/dev/null"
 
