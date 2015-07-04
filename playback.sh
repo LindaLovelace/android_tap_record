@@ -90,7 +90,7 @@ cat $afile |\
 # 若两个sendevent时间差 < 0.1s 认为在同一个操作内
 # 因为一个触屏操作(如点击一下)，需由多个sendevent来组成
 # TODO: 这里有一定的人为定义在内，有没有从内核中找到一个准确的时间?
-mindiff=0.1
+mindiff=0.00002
 
 awk '{print $1}' $afile >$t1file                # 抽取时间列，存至 $t1file
 tstart=$(sed -n '1p' $t1file)
@@ -110,8 +110,8 @@ while read t; do
     if $(compare_float $mindiff $tdiff); then
         echo ''                                 # 时间差 <0.1s 认为无需sleep
     else
-        #echo "sleep $tdiff; ${sleep_arry_line[@]}"
-        echo "sleep $tdiff ;"
+        echo "sleep $tdiff ;${sleep_arry_line[@]}"
+        #echo "sleep $tdiff ;"
         sleep_arry_line+=($index)
         sleep_arry_time+=($(awk -va=$tdiff 'BEGIN {print a*1000000}'))
     fi
