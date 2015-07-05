@@ -9,14 +9,11 @@
 #                脚本唯一不好的地方：mindiff=0.1 此值并不代表所有操作的真实场景
 #                详情请看脚本 TODO
 # 
-#       OPTIONS: ---
-#  REQUIREMENTS: ---
+#  REQUIREMENTS: android toolchain
 #          BUGS: ---
-#         NOTES: ---
+#         NOTES: 不精准
 #        AUTHOR: lwq (28120), scue@vip.qq.com
-#  ORGANIZATION: 
-#       CREATED: Friday, December 05, 2014 12:30:37 CST CST
-#      REVISION:  ---
+#      REVISION: z5n0w
 #===============================================================================
 
 file=${1:-"record_stuff.txt"}                   # origin
