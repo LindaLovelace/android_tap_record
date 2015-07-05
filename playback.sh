@@ -90,7 +90,7 @@ cat $afile |\
 # 若两个sendevent时间差 < 0.1s 认为在同一个操作内
 # 因为一个触屏操作(如点击一下)，需由多个sendevent来组成
 # TODO: 这里有一定的人为定义在内，有没有从内核中找到一个准确的时间?
-mindiff=0.00002
+mindiff=0.000001
 
 awk '{print $1}' $afile >$t1file                # 抽取时间列，存至 $t1file
 tstart=$(sed -n '1p' $t1file)
@@ -110,8 +110,8 @@ while read t; do
     if $(compare_float $mindiff $tdiff); then
         echo ''                                 # 时间差 <0.1s 认为无需sleep
     else
-        echo "sleep $tdiff ;${sleep_arry_line[@]}"
-        #echo "sleep $tdiff ;"
+        #echo "sleep $tdiff; ${sleep_arry_line[@]}"
+        echo "sleep $tdiff ;"
         sleep_arry_line+=($index)
         sleep_arry_time+=($(awk -va=$tdiff 'BEGIN {print a*1000000}'))
     fi
@@ -125,17 +125,22 @@ echo "exit" >>$send
 # echo "需睡眠时间: ${sleep_arry_time[@]}"
 
 # 组装成C语言源代码文件
-index=1
-sleep_arry_time_index=0
->$tcfile
-while read line; do                             # 输出临时C语言文件
-    type=$(echo $line|awk '{print $3}')
-    code=$(echo $line|awk '{print $4}')
-    value=$(echo $line|awk '{print $5}')
-    if containsElement $index ${sleep_arry_line[@]}; then
-        echo "    usleep(${sleep_arry_time[$sleep_arry_time_index]});" >>$tcfile
-    fi
-cat<<EOF >>$tcfile
+cat send.sh > tmp.sh
+sed -i "s:;:\n:g" tmp.sh
+cat tmp.sh |while read line
+do
+ if [[ $line == *"sleep"* ]]
+ then 
+  second=$(echo $line|awk '{print $2}' )
+  echo $second
+  nanof=$(echo "$second*1000000"|bc)
+  nano=$(printf "%.f" $nanof)
+  echo "usleep ($nano) ;" >> $tcfile
+ else
+   type=$(echo $line|awk '{print $3}')
+   code=$(echo $line|awk '{print $4}')
+   value=$(echo $line|awk '{print $5}')
+cat<<EOF >> $tcfile
     memset(&event, 0, sizeof(event));
     event.type = $type;
     event.code = $code;
@@ -146,8 +151,8 @@ cat<<EOF >>$tcfile
         return -1;
     }
 EOF
-    ((index++))
-done < $ofile 
+ fi
+done
 append_line=67
 sed "$append_line r $tcfile" $modelcfile >$targetcfile
 sed -i "s:_REPLACE_DEVICE_:${touchdev}:g" $targetcfile
@@ -160,5 +165,5 @@ echo "  arm-linux-androideabi-gcc $targetcfile -o ${targetcfile%.c}"
 # adb shell <$send >/dev/null
 
 # remove
-rm -f $t1file $tfile $ofile $afile $tcfile
+rm -f $t1file $tfile $ofile $afile $tcfile tmp.sh
 #echo "Tips: you can run [ adb shell < $send ] for testing manually."
