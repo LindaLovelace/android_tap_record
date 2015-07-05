@@ -132,7 +132,7 @@ do
  if [[ $line == *"sleep"* ]]
  then 
   second=$(echo $line|awk '{print $2}' )
-  echo $second
+  #echo $second
   nanof=$(echo "$second*1000000"|bc)
   nano=$(printf "%.f" $nanof)
   echo "usleep ($nano) ;" >> $tcfile
@@ -156,6 +156,8 @@ done
 append_line=67
 sed "$append_line r $tcfile" $modelcfile >$targetcfile
 sed -i "s:_REPLACE_DEVICE_:${touchdev}:g" $targetcfile
+tac $targetcfile |sed '3,11d' > send.cc
+tac send.cc > $targetcfile
 echo "使用Shell脚本执行:"
 echo "  adb shell < $send >/dev/null"
 
